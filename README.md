@@ -1,4 +1,4 @@
 # Files
-- data_download.py : Download the dataset on Kaggle using python package kagglehub
-- create_db.py     : Convert the downloaded .csv file into sqlite database
-- test_db.py       : A sample code to test the converted database
+- create_db.py          : Download the dataset on Kaggle, then convert the downloaded .csv file into sqlite database
+- revenue_budget.py     : Plot revenue v.s. budget; Count number of movies having extreme ratio between revenue and budget
+- tools.sql_handling.py : Simplifies callings for sql queries by taking our database as default.
