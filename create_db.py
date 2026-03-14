@@ -1,59 +1,53 @@
 import pandas as pd
 import sqlite3 as sql
+import kagglehub
 
-# Change this if you have different path for the downloaded csv file
-csv_path = '/Users/user/.cache/kagglehub/datasets/mohammedalsubaie/movies/versions/1/Movies.csv'
-movies = pd.read_csv(csv_path)
 
-#### Genres and production countries are strings splitting with commas
-#### Create junction tables for them, then remove them from original table
+# Download latest version
+path = kagglehub.dataset_download("mohammedalsubaie/movies")
+print("Path to dataset files:", path)
 
-# Collect all distinct genres
-all_genres = sorted(movies['genres'].dropna().str.split(', ').explode().unique())
+# Try this if you have different path for the downloaded csv file
+#path = '/Users/user/.cache/kagglehub/datasets/mohammedalsubaie/movies/versions/1/Movies.csv'
 
-# Create a genre lookup table
-genres_df = pd.DataFrame({'genre_id': range(1, len(all_genres) + 1), 'genre_name': all_genres})
+movies = pd.read_csv(path)
 
-# Create a junction table for movies and genres
-genre_junction = movies[['movie_id', 'genres']].copy()
-genre_junction['genres'] = genre_junction['genres'].str.split(', ')
-genre_junction = genre_junction.explode('genres')
-genre_junction = genre_junction.merge(genres_df, left_on='genres', right_on='genre_name')
-genre_junction = genre_junction[['movie_id', 'genre_id']] # Keep only the foreign keys
+def junction(col_name, id_label, id_name, movies=movies, show_junction_items=False):
+  # Collect all distinct items
+  distinct_item = sorted(movies[col_name].dropna().str.split(', ').explode().unique())
 
-# Collect all distinct countries
-all_countries = sorted(movies['production_countries'].dropna().str.split(', ').explode().unique())
+  # Create a lookup table
+  item_df = pd.DataFrame({id_label: range(1, len(distinct_item) + 1), id_name: distinct_item})
 
-# Create a country lookup table
-countries_df = pd.DataFrame({'country_id': range(1, len(all_countries) + 1), 'country': all_countries})
+  # Create a junction table
+  junction = movies[['movie_id', col_name]].copy()
+  junction[id_label] = junction[col_name].str.split(', ')
+  junction = junction.explode(id_label)
+  junction = junction.merge(item_df, left_on=id_label, right_on=id_name)
+  junction = junction[['movie_id', id_label+'_y']] # Keep only the foreign keys
+  junction.columns = ['movie_id', id_label]
 
-# Create a junction table for movies and countries
-country_junction = movies[['movie_id', 'production_countries']].copy()
-country_junction['production_countries'] = country_junction['production_countries'].str.split(', ')
-country_junction = country_junction.explode('production_countries')
-country_junction = country_junction.merge(countries_df, left_on='production_countries', right_on='country')
-country_junction = country_junction[['movie_id', 'country_id']] # Keep only the foreign keys
+  return item_df, junction
 
-#### Keeps other columns only
-base_columns = list(movies.columns)
-for column in ['genres', 'production_countries']:
-    base_columns.remove(column)
-movies_base = movies[base_columns]
+genres, movie_genres = junction('genres', 'genre_id', 'genre')
+countries, movie_countries = junction('production_countries', 'country_id', 'country')
+companies, movie_companies = junction('production_companies', 'company_id', 'company')
 
-# Create database
+## Remove columns to simplify
+#movies_columns = movies.columns.tolist()
+#for col in ['genres', 'production_countries', 'production_companies']:
+#  movies_columns.remove(col)
+#movies = movies[movies_columns]
+
 conn = sql.connect('movies_data.db')
-cursor = conn.cursor()
+movies.to_sql('movies', conn, if_exists='replace', index=False)
+genres.to_sql('genres', conn, if_exists='replace', index=False)
+countries.to_sql('countries', conn, if_exists='replace', index=False)
+companies.to_sql('companies', conn, if_exists='replace', index=False)
 
-# Create base table
-movies_base.to_sql('movies', conn, if_exists='replace', index=False)
-
-# Create the genre table and the country table
-genres_df.to_sql('genres', conn, if_exists='replace', index=False)
-countries_df.to_sql('countries', conn, if_exists='replace', index=False)
-
-# Create junction tables
-genre_junction.to_sql('movie_genres', conn, if_exists='replace', index=False)
-country_junction.to_sql('movie_countries', conn, if_exists='replace', index=False)
+movie_genres.to_sql('movie_genres', conn, if_exists='replace', index=False)
+movie_countries.to_sql('movie_countries', conn, if_exists='replace', index=False)
+movie_companies.to_sql('movie_companies', conn, if_exists='replace', index=False)
 
 conn.commit()
 conn.close()
