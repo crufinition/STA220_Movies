@@ -9,7 +9,7 @@ __all__ = [
 db = sql.connect('movies_data.db')
 
 def my_sql(query, db=db):
-  '''A shorthand for pd.read_sql
+  '''A shorthand for pd.read_sql.
   Taking our database as default'''
   return pd.read_sql(query, db)
 
