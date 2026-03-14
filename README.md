@@ -2,6 +2,7 @@
 In our code, we used these Python libraries: `kagglehub`, `sqlite3`, `mathplotlib`, `seaborn`, `pandas`
 
 # Files
+
 STA220_Movies/
 ├── tools/                 # A custome Python package
 |   ├── __init__.py        # Package initialization for clean imports
