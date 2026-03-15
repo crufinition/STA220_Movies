@@ -1,5 +1,5 @@
 # Notice
-In our code, we used these Python libraries: `kagglehub`, `sqlite3`, `mathplotlib`, `seaborn`, `pandas`, `numpy`, `os`, imageio`
+In our code, we used these Python libraries: `kagglehub`, `sqlite3`, `mathplotlib`, `seaborn`, `pandas`, `numpy`, `os`, `imageio`
 
 # Files
 ```text
